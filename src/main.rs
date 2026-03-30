@@ -28,6 +28,10 @@ struct Board {
 const INITIAL_BOARD: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 impl Board {
+    pub fn new() -> Result<Self, FenError> {
+        Board::from_fen(INITIAL_BOARD)
+    }
+
     pub fn from_fen(raw: &str) -> Result<Self, FenError> {
         let piece_placement = raw
             .split_whitespace()
@@ -59,7 +63,7 @@ impl fmt::Debug for Board {
             match square {
                 Some((piece, Color::White)) => write!(f, " {} ", piece_char(*piece))?,
                 Some((piece, Color::Black)) => {
-                    write!(f, " {} ", piece_char(*piece).to_ascii_uppercase())?
+                    write!(f, " {} ", piece_char(*piece).to_ascii_lowercase())?
                 }
                 None => write!(f, " . ")?,
             }
@@ -92,7 +96,6 @@ fn populate_board(chars: &[char]) -> Result<[Option<(Piece, Color)>; 64], FenErr
                 board[index] = Some((parse_piece(*c)?, Color::Black));
                 index += 1
             }
-            '/' => continue,
             _ => return Err(FenError::InvalidCharacter),
         }
     }
@@ -113,6 +116,6 @@ fn parse_piece(piece_char: char) -> Result<Piece, FenError> {
 }
 
 fn main() {
-    let board = Board::from_fen(INITIAL_BOARD).unwrap();
+    let board = Board::new().unwrap();
     println!("{:?}", board)
 }
