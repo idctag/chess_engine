@@ -1,19 +1,26 @@
-use core::fmt;
-
 use crate::{
-    fen::{FenError, piece_char, populate_board},
-    piece::{Color, Piece},
+    fen::{FenError, populate_board},
+    piece::Color,
 };
 
-const INITIAL_BOARD: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+const INITIAL_BOARD_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 pub struct Board {
-    squares: [Option<(Piece, Color)>; 64],
+    pub pieces: [[u64; 6]; 2],
+
+    pub turn: Option<Color>,
 }
 
 impl Board {
     pub fn new() -> Result<Self, FenError> {
-        Board::from_fen(INITIAL_BOARD)
+        Board::from_fen(INITIAL_BOARD_FEN)
+    }
+
+    pub fn empty_board() -> Self {
+        Board {
+            pieces: [[0; 6]; 2],
+            turn: None,
+        }
     }
 
     pub fn from_fen(raw: &str) -> Result<Self, FenError> {
@@ -23,26 +30,7 @@ impl Board {
             .ok_or(FenError::InvalidStructure)?;
 
         let chars: Vec<char> = piece_placement.chars().filter(|&c| c != '/').collect();
-        let squares = populate_board(&chars)?;
-        Ok(Board { squares })
-    }
-}
-
-impl fmt::Debug for Board {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f)?;
-        for (i, square) in self.squares.iter().enumerate() {
-            if i % 8 == 0 && i > 0 {
-                writeln!(f)?;
-            }
-            match square {
-                Some((piece, Color::White)) => write!(f, " {} ", piece_char(*piece))?,
-                Some((piece, Color::Black)) => {
-                    write!(f, " {} ", piece_char(*piece).to_ascii_lowercase())?
-                }
-                None => write!(f, " . ")?,
-            }
-        }
-        Ok(())
+        let board = populate_board(&chars)?;
+        Ok(board)
     }
 }

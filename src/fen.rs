@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::piece::{Color, Piece};
+use crate::board::Board;
 
 pub enum FenError {
     InvalidStructure,
@@ -16,46 +16,26 @@ impl fmt::Debug for FenError {
     }
 }
 
-pub fn populate_board(chars: &[char]) -> Result<[Option<(Piece, Color)>; 64], FenError> {
-    let mut board = [None; 64];
-    let mut index = 0;
+pub fn populate_board(chars: &[char]) -> Result<Board, FenError> {
+    let mut board = Board::empty_board();
+    let mut square = 64;
     for c in chars {
-        match c {
-            '1'..='8' => index += c.to_digit(10).unwrap() as usize,
-            'P' | 'R' | 'N' | 'B' | 'Q' | 'K' => {
-                board[index] = Some((parse_piece(*c)?, Color::White));
-                index += 1
+        square -= 1;
+        let color = if c.is_ascii_uppercase() { 0 } else { 1 };
+        let piece_type = match c.to_ascii_lowercase() {
+            'p' => 0,
+            'n' => 1,
+            'b' => 2,
+            'r' => 3,
+            'q' => 4,
+            'k' => 5,
+            '1'..'8' => {
+                square -= (c.to_digit(10).unwrap() - 1) as i32;
+                continue;
             }
-            'p' | 'r' | 'n' | 'b' | 'q' | 'k' => {
-                board[index] = Some((parse_piece(*c)?, Color::Black));
-                index += 1
-            }
-            _ => return Err(FenError::InvalidCharacter),
-        }
+            _ => continue,
+        };
+        board.pieces[color][piece_type] |= 1 << square
     }
-
     Ok(board)
-}
-
-pub fn parse_piece(piece_char: char) -> Result<Piece, FenError> {
-    match piece_char.to_ascii_lowercase() {
-        'p' => Ok(Piece::Pawn),
-        'r' => Ok(Piece::Rook),
-        'n' => Ok(Piece::Knight),
-        'b' => Ok(Piece::Bishop),
-        'q' => Ok(Piece::Queen),
-        'k' => Ok(Piece::King),
-        _ => Err(FenError::InvalidCharacter),
-    }
-}
-
-pub fn piece_char(piece: Piece) -> char {
-    match piece {
-        Piece::King => 'K',
-        Piece::Queen => 'Q',
-        Piece::Rook => 'R',
-        Piece::Bishop => 'B',
-        Piece::Pawn => 'P',
-        Piece::Knight => 'N',
-    }
 }
